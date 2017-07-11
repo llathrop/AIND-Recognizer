@@ -37,3 +37,10 @@ class TestSelectors(TestCase):
         self.assertGreaterEqual(model.n_components, 2)
         model = SelectorDIC(self.sequences, self.xlengths, 'TOY').select()
         self.assertGreaterEqual(model.n_components, 2)
+
+test=TestSelectors()
+
+print("test setup",test.setUp())
+print("test CV",test.test_select_cv_interface())
+print("test bic",test.test_select_bic_interface())
+print("test dic",test.test_select_dic_interface())
