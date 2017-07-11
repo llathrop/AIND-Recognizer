@@ -79,6 +79,7 @@ class SelectorBIC(ModelSelector):
         # TODO implement model selection based on BIC scores
         best_score = float("-inf")
         best_model = None
+        num_features = self.X.shape[1]
         
         for curr_components in range(self.min_n_components, self.max_n_components+1):
             try:
@@ -86,7 +87,11 @@ class SelectorBIC(ModelSelector):
                 logL=model.score(self.X, self.lengths)
                 logN=np.log(len(self.X))
                 
-                p=curr_components+(curr_components*(curr_components-1))+(curr_components*self.X.shape[1]*2)
+                # p = Initial state occupation probabilities + Transition probabilities + Emission probabilities
+                Initial_state_occupation_probabilities = curr_components
+                Transition_probabilities = curr_components*(curr_components - 1)
+                Emission_probabilities = curr_components*num_features*2 
+                p = Initial_state_occupation_probabilities + Transition_probabilities + Emission_probabilities
                 
                 BIC = -2 * logL + p * logN
                 
@@ -115,7 +120,39 @@ class SelectorDIC(ModelSelector):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
         # TODO implement model selection based on DIC scores
-        #raise NotImplementedError
+        best_score = log_other_words_score=float("-inf")
+        best_model = None
+        num_features = self.X.shape[1]
+        for curr_components in range(self.min_n_components, self.max_n_components+1):
+            try:
+                model=self.base_model(curr_components)
+                logL=model.score(self.X, self.lengths)
+                sum_other_words_score=0
+                count_other_words=0
+                
+                for curr_word in self.words:
+                    if curr_word not in self.this_word:
+                        curr_word_X, curr_word_length=self.hwords[curr_word]
+                        try:
+                            sum_other_words_score= sum_other_words_score+model.score(curr_word_X, curr_word_length)
+                            count_other_words+=1
+                        except ValueError as e:
+                            #print("BAD:",e)
+                            continue
+                if count_other_words>0:
+                    log_other_words_score=sum_other_words_score/count_other_words
+                
+                DIC=logL-log_other_words_score
+                
+                if DIC>best_score:
+                    best_score=DIC
+                    best_model=model
+                        
+                
+            except ValueError as e:
+                    #print("BAD:",e)
+                    continue
+        return best_model
 
 
 class SelectorCV(ModelSelector):
