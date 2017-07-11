@@ -77,8 +77,9 @@ class SelectorBIC(ModelSelector):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
         # TODO implement model selection based on BIC scores
-        raise NotImplementedError
-
+        
+        best_num_components = self.n_constant
+        return self.base_model(best_num_components)
 
 class SelectorDIC(ModelSelector):
     ''' select best model based on Discriminative Information Criterion
@@ -93,7 +94,7 @@ class SelectorDIC(ModelSelector):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
         # TODO implement model selection based on DIC scores
-        raise NotImplementedError
+        #raise NotImplementedError
 
 
 class SelectorCV(ModelSelector):
@@ -105,4 +106,40 @@ class SelectorCV(ModelSelector):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
         # TODO implement model selection using CV
-        raise NotImplementedError
+        best_model=None
+        best_model_score=model_score=float("-inf")
+        num_splits= min(3, len(self.lengths))
+        
+        if num_splits ==1:
+            print("One component, return base_model")
+            return self.base_model(num_splits)
+            
+        for curr_components in range(self.min_n_components, self.max_n_components+1):
+            split_method = KFold(n_splits=num_splits)
+            num_splits_tried=0
+            split_score=0
+            for cv_train_idx, cv_test_idx in split_method.split(self.sequences):
+                X_train, y_train = combine_sequences(cv_train_idx, self.sequences)
+                curr_model=None                
+                try:
+                    curr_model=GaussianHMM(n_components=curr_components, covariance_type="diag", n_iter=1000, 
+                                           random_state=self.random_state, verbose=False).fit(X_train, y_train)
+                    num_splits_tried+=1
+                    split_score= split_score+curr_model.score(X_train, y_train)
+                    #print("tried and it worked!",curr_components,split_score,num_splits_tried)
+                except ValueError as e:
+                    #print("BAD:",e)
+                    continue
+            if num_splits_tried>0:
+                model_score=split_score/num_splits
+            
+            if model_score> best_model_score:
+                #print("found a better model")
+                best_model_score=model_score
+                best_model=curr_model
+        if best_model==None:
+            print("none shall pass")
+            #return self.base_model(num_splits)
+        return best_model
+                   
+
