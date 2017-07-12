@@ -98,9 +98,8 @@ class SelectorBIC(ModelSelector):
                 if BIC>best_score:
                     best_score=BIC
                     best_model=model
-            except ValueError as e:
-                    #print("BAD:",e)
-                    continue
+            except:
+                continue
         return best_model
             
         
@@ -136,8 +135,7 @@ class SelectorDIC(ModelSelector):
                         try:
                             sum_other_words_score= sum_other_words_score+model.score(curr_word_X, curr_word_length)
                             count_other_words+=1
-                        except ValueError as e:
-                            #print("BAD:",e)
+                        except:                                                        
                             continue
                 if count_other_words>0:
                     log_other_words_score=sum_other_words_score/count_other_words
@@ -146,12 +144,9 @@ class SelectorDIC(ModelSelector):
                 
                 if DIC>best_score:
                     best_score=DIC
-                    best_model=model
-                        
-                
-            except ValueError as e:
-                    #print("BAD:",e)
-                    continue
+                    best_model=model    
+            except: 
+                continue
         return best_model
 
 
@@ -169,7 +164,7 @@ class SelectorCV(ModelSelector):
         num_splits= min(3, len(self.lengths))
         
         if num_splits ==1:
-            print("One component, return base_model")
+            #print("One component, return base_model")
             return self.base_model(num_splits)
             
         for curr_components in range(self.min_n_components, self.max_n_components+1):
@@ -185,8 +180,7 @@ class SelectorCV(ModelSelector):
                     num_splits_tried+=1
                     split_score= split_score+curr_model.score(X_train, y_train)
                     #print("tried and it worked!",curr_components,split_score,num_splits_tried)
-                except ValueError as e:
-                    #print("BAD:",e)
+                except:
                     continue
             if num_splits_tried>0:
                 model_score=split_score/num_splits
@@ -195,8 +189,8 @@ class SelectorCV(ModelSelector):
                 #print("found a better model")
                 best_model_score=model_score
                 best_model=curr_model
-        if best_model==None:
-            print("none shall pass")
+        #if best_model==None:
+            #print("none shall pass")
             #return self.base_model(num_splits)
         return best_model
                    
