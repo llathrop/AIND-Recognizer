@@ -84,11 +84,13 @@ class SelectorBIC(ModelSelector):
         
         for curr_components in range(self.min_n_components, self.max_n_components+1):
             try:
-                model=self.base_model(curr_components)
+                model=self.base_model(curr_components) 
                 logL=model.score(self.X, self.lengths)
                 logN=np.log(len(self.X))
                 
                 # p = Initial state occupation probabilities + Transition probabilities + Emission probabilities
+                # this formula for p comes via the udacity forums:
+                # https://discussions.udacity.com/t/number-of-parameters-bic-calculation/233235/4
                 Initial_state_occupation_probabilities = curr_components
                 Transition_probabilities = curr_components*(curr_components - 1)
                 Emission_probabilities = curr_components*num_features*2 
@@ -96,10 +98,10 @@ class SelectorBIC(ModelSelector):
                 
                 BIC = -2 * logL + p * logN
                 
-                if BIC>best_score:
+                if BIC>best_score: #A higher BIC score indicates a better fit
                     best_score=BIC
                     best_model=model
-            except:
+            except: # if we fail at any point we don't want to modify the best score/model
                 continue
         return best_model
             
@@ -122,7 +124,7 @@ class SelectorDIC(ModelSelector):
         # TODO implement model selection based on DIC scores
         best_score = log_other_words_score=float("-inf")
         best_model = None
-        num_features = self.X.shape[1]
+
         for curr_components in range(self.min_n_components, self.max_n_components+1):
             try:
                 model=self.base_model(curr_components)
@@ -134,7 +136,8 @@ class SelectorDIC(ModelSelector):
                     if curr_word not in self.this_word:
                         curr_word_X, curr_word_length=self.hwords[curr_word]
                         try:
-                            sum_other_words_score= sum_other_words_score+model.score(curr_word_X, curr_word_length)
+                            curr_word_score=model.score(curr_word_X, curr_word_length)       
+                            sum_other_words_score= sum_other_words_score+curr_word_score
                             count_other_words+=1
                         except:                                                        
                             continue
