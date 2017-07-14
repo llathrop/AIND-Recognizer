@@ -78,7 +78,7 @@ class SelectorBIC(ModelSelector):
         warnings.filterwarnings("ignore", category=DeprecationWarning)
 
         # TODO implement model selection based on BIC scores
-        best_score = float("-inf")
+        best_score = float("+inf")
         best_model = None
         num_features = self.X.shape[1]
         
@@ -91,14 +91,21 @@ class SelectorBIC(ModelSelector):
                 # p = Initial state occupation probabilities + Transition probabilities + Emission probabilities
                 # this formula for p comes via the udacity forums:
                 # https://discussions.udacity.com/t/number-of-parameters-bic-calculation/233235/4
-                Initial_state_occupation_probabilities = curr_components
-                Transition_probabilities = curr_components*(curr_components - 1)
-                Emission_probabilities = curr_components*num_features*2 
-                p = Initial_state_occupation_probabilities + Transition_probabilities + Emission_probabilities
+                #Initial_state_occupation_probabilities = curr_components
+                #Transition_probabilities = curr_components*(curr_components - 1)
+                #Emission_probabilities = curr_components*num_features*2 
+                #p = Initial_state_occupation_probabilities + Transition_probabilities + Emission_probabilities
+                
+                free_transition_probability = curr_components*(curr_components-1)
+                free_starting_probabilities = curr_components-1 
+                Number_of_means = curr_components*num_features
+                Number_of_covariances=curr_components*num_features
+                
+                p = free_transition_probability + free_starting_probabilities + Number_of_means + Number_of_covariances
                 
                 BIC = -2 * logL + p * logN
                 
-                if BIC>best_score: #A higher BIC score indicates a better fit
+                if BIC<best_score: #A higher BIC score indicates a better fit
                     best_score=BIC
                     best_model=model
             except: # if we fail at any point we don't want to modify the best score/model
