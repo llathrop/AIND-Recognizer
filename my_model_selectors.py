@@ -88,14 +88,6 @@ class SelectorBIC(ModelSelector):
                 logL=model.score(self.X, self.lengths)
                 logN=np.log(len(self.X))
                 
-                # p = Initial state occupation probabilities + Transition probabilities + Emission probabilities
-                # this formula for p comes via the udacity forums:
-                # https://discussions.udacity.com/t/number-of-parameters-bic-calculation/233235/4
-                #Initial_state_occupation_probabilities = curr_components
-                #Transition_probabilities = curr_components*(curr_components - 1)
-                #Emission_probabilities = curr_components*num_features*2 
-                #p = Initial_state_occupation_probabilities + Transition_probabilities + Emission_probabilities
-                
                 free_transition_probability = curr_components*(curr_components-1)
                 free_starting_probabilities = curr_components-1 
                 Number_of_means = curr_components*num_features
@@ -184,25 +176,24 @@ class SelectorCV(ModelSelector):
             split_score=0
             for cv_train_idx, cv_test_idx in split_method.split(self.sequences):
                 X_train, y_train = combine_sequences(cv_train_idx, self.sequences)
+                X_test,y_test = combine_sequences(cv_test_idx, self.sequences)
                 curr_model=None                
                 try:
                     curr_model=GaussianHMM(n_components=curr_components, covariance_type="diag", n_iter=1000, 
                                            random_state=self.random_state, verbose=False).fit(X_train, y_train)
-                    num_splits_tried+=1
-                    split_score= split_score+curr_model.score(X_train, y_train)
-                    #print("tried and it worked!",curr_components,split_score,num_splits_tried)
+                    num_splits_tried+=1  
+                    split_score= split_score+curr_model.score(X_test,y_test)
+                #except ValueError as e :
+                #    print( "Error:",e )
                 except:
                     continue
             if num_splits_tried>0:
                 model_score=split_score/num_splits
             
             if model_score> best_model_score:
-                #print("found a better model")
                 best_model_score=model_score
                 best_model=curr_model
-        #if best_model==None:
-            #print("none shall pass")
-            #return self.base_model(num_splits)
+     
         return best_model
                    
     
